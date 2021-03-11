@@ -1,0 +1,16 @@
+name: "Pull Request"
+on:
+  pull_request:
+    types: [opened, reopened, synchronize]
+jobs:
+  check-dockerfile:
+    name: "Check Dockerfile"
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Checkout"
+        uses: "actions/checkout@v2"
+
+      - name: "Hadolint"
+        uses: brpaz/hadolint-action@v1.2.1
+        with:
+          dockerfile: Dockerfile
