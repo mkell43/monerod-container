@@ -55,4 +55,4 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
           registry: docker.pkg.github.com
           repository: ${{ github.repository }}/monerod
-          tags: latest, ${{ steps.vars.outputs.tag }}, ${{ steps.vars.outputs.sha_short }}
+          tags:  ${{ steps.vars.outputs.sha_short }}, ${{ steps.vars.outputs.tag }}, latest
