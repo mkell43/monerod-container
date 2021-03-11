@@ -2,7 +2,7 @@ name: "Push Master"
 on:
   push:
     branches:
-      - master
+      - main
 jobs:
   build-dockerfile:
     name: "Build Docker Container Image"
