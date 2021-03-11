@@ -29,6 +29,23 @@ RUN curl "${MONERO_URL}" --output "${MONERO_ARCHIVE}" && \
 
 FROM ubuntu:rolling
 
+# Lovingly taken from: https://stackoverflow.com/a/55043303
+#   It might be overkill.
+# We have hadolint ignore the apt-get upgrade here because we
+#   want to ensure we're getting security fixes that might be
+#   not yet be in the base container on Docker Hub.
+# hadolint ignore=DL3005
+RUN apt-get update && DEBIAN_FRONTEND=noninteractive \
+    apt-get \
+    -o Dpkg::Options::=--force-confold \
+    -o Dpkg::Options::=--force-confdef \
+    -y \
+    --allow-downgrades \
+    --allow-remove-essential \
+    --allow-change-held-packages \
+    upgrade && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
 RUN groupadd --system monero && useradd -r -g monero -d /monero -m monero
 USER monero
 WORKDIR /monero
