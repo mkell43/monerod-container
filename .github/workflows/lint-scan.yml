@@ -1,0 +1,44 @@
+name: "Lint & Scan Dockerfile"
+on:
+  workflow_run:
+    workflows: ["Push Master", "Update Image"]
+  push:
+    paths: [".github/workflows/lint-scan.yml"]
+jobs:
+  check-dockerfile:
+    name: "Check Dockerfile"
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Checkout Repository"
+        uses: "actions/checkout@v2"
+
+      - name: "Hadolint - Lint Dockerfile"
+        uses: brpaz/hadolint-action@v1.3.1
+        with:
+          dockerfile: Dockerfile
+
+      # Default GITHUB_* and github.* variables don't include the short SHA.
+      #   We manually create it here to use later in tagging the built
+      #   image and scanning it later.
+      # https://stackoverflow.com/a/59819441
+      - name: "Set Short SHA"
+        id: var
+        run: echo "::set-output name=sha_short::$(git rev-parse --short HEAD)"
+
+      - name: "Build Container Image"
+        run: docker build . --file Dockerfile --tag ${{ github.repository }}:${{ steps.var.outputs.sha_short }}
+
+      - name: "Scan Container Image w/ Trivy"
+        uses: aquasecurity/trivy-action@master
+        id: scan
+        with:
+          image-ref: ${{ github.repository }}:${{ steps.var.outputs.sha_short }}
+          format: "template"
+          template: '@/contrib/sarif.tpl'
+          output: "trivy-results.sarif"
+          ignore-unfixed: true
+
+      - name: "Upload Trivy Scan Report"
+        uses: github/codeql-action/upload-sarif@v1
+        with:
+          sarif_file: "trivy-results.sarif"
