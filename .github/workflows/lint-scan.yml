@@ -1,7 +1,7 @@
 name: "Lint & Scan Dockerfile"
 on:
   workflow_run:
-    workflows: ["Push Master", "Update Image"]
+    workflows: ["Push Master", "Update Image", "Pull Request"]
   push:
     paths: [".github/workflows/lint-scan.yml"]
 jobs:
