@@ -1,0 +1,59 @@
+name: "Build Image"
+on:
+  workflow_run:
+    workflows: ["Push Master", "Update Image"]
+  push:
+    paths: [".github/workflows/build-image.yml"]
+jobs:
+  build-dockerfile:
+    name: "Build Docker Container Image"
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Checkout Repository"
+        uses: "actions/checkout@v2"
+
+      # Default GITHUB_* and github.* variables don't include the short SHA.
+      #   We manually create it here to use later in tagging the built
+      #   image.
+      # https://stackoverflow.com/a/59819441
+      # We also grab the MONERO_BRANCH ARG from the Dockerfile for tagging.
+      - name: "Get Tag Vars"
+        id: vars
+        run: |
+          echo "::set-output name=sha_short::$(git rev-parse --short HEAD)"
+          echo "::set-output name=tag::$(awk -F "=" '/MONERO_BRANCH=/ {print $2}' Dockerfile)"
+
+      # We don't take full advantage of Docker Buildx/QEMU...
+      #   yet.
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v1
+
+      - name: "Setup Docker Buildx"
+        uses: docker/setup-buildx-action@v1
+
+      # - name: "Log Into GHCR.io"
+      #   uses: docker/login-action@v1
+      #   with:
+      #     registry: ghcr.io
+      #     username: ${{ github.repository_owner }}
+      #     password: ${{ secrets.CONTAINER_REGISTRY_PAT }}
+
+      # - name: "Build Container Image & Push to GHCR.io"
+      #   uses: docker/build-push-action@v2
+      #   with:
+      #     context: .
+      #     platforms: linux/amd64
+      #     push: true
+      #     tags: |
+      #       ghcr.io/${{ github.repository }}:latest
+      #       ghcr.io/${{ github.repository }}:${{ steps.vars.outputs.tag }}
+      #       ghcr.io/${{ github.repository }}:${{ steps.vars.outputs.sha_short }}
+
+      - name: "Build Container Image & Push to GH Docker Registry"
+        uses: docker/build-push-action@v1
+        with:
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+          registry: docker.pkg.github.com
+          repository: ${{ github.repository }}/monerod
+          tags:  ${{ steps.vars.outputs.sha_short }}, ${{ steps.vars.outputs.tag }}, latest
