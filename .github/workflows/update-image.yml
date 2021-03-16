@@ -4,37 +4,9 @@ on:
   schedule:
     - cron: "0 12 * * *" # Run every day at noon UTC
 jobs:
-  build-dockerfile:
+  update-image:
     name: "Build Docker Container Image"
     runs-on: ubuntu-latest
     steps:
       - name: "Checkout Repository"
         uses: "actions/checkout@v2"
-
-      # Default GITHUB_* and github.* variables don't include the short SHA.
-      #   We manually create it here to use later in tagging the built
-      #   image.
-      # https://stackoverflow.com/a/59819441
-      # We also grab the MONERO_BRANCH ARG from the Dockerfile for tagging.
-      - name: "Get Tag Vars"
-        id: vars
-        run: |
-          echo "::set-output name=sha_short::$(git rev-parse --short HEAD)"
-          echo "::set-output name=tag::$(awk -F "=" '/MONERO_BRANCH=/ {print $2}' Dockerfile)"
-
-      # We don't take full advantage of Docker Buildx/QEMU...
-      #   yet.
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v1
-
-      - name: "Setup Docker Buildx"
-        uses: docker/setup-buildx-action@v1
-
-      - name: "Build Container Image & Push to GH Docker Registry"
-        uses: docker/build-push-action@v1
-        with:
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-          registry: docker.pkg.github.com
-          repository: ${{ github.repository }}/monerod
-          tags:  ${{ steps.vars.outputs.tag }}, latest
