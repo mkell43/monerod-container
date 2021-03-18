@@ -56,5 +56,5 @@ EXPOSE 18089
 
 # TODO: Set blockchain directory.
 # TODO: Load config file.
-ENTRYPOINT ["monerod", "--non-interactive"]
+ENTRYPOINT ["./monerod", "--non-interactive"]
 CMD ["--rpc-restricted-bind-ip=0.0.0.0", "--rpc-restricted-bind-port=18089", "--no-igd", "--no-zmq", "--enable-dns-blocklist"]
