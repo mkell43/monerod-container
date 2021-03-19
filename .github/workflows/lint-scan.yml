@@ -12,11 +12,6 @@ jobs:
       - name: "Checkout Repository"
         uses: "actions/checkout@v2"
 
-      - name: "Hadolint - Lint Dockerfile"
-        uses: brpaz/hadolint-action@v1.3.1
-        with:
-          dockerfile: Dockerfile
-
       # Default GITHUB_* and github.* variables don't include the short SHA.
       #   We manually create it here to use later in tagging the built
       #   image and scanning it later.
@@ -24,6 +19,15 @@ jobs:
       - name: "Set Short SHA"
         id: var
         run: echo "::set-output name=sha_short::$(git rev-parse --short HEAD)"
+
+      - name: Lint Code Base
+        uses: github/super-linter@v3
+        env:
+          VALIDATE_ALL_CODEBASE: false
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DEFAULT_BRANCH: ${GITHUB_REF##*/}
+          VALIDATE_DOCKERFILE: true
+          VALIDATE_DOCKERFILE_HADOLINT: true
 
       - name: "Build Container Image"
         run: docker build . --file Dockerfile --tag ${{ github.repository }}:${{ steps.var.outputs.sha_short }}
