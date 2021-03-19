@@ -1,5 +1,7 @@
 # monerod-container
 
+[![GitHub Super-Linter](https://github.com/mkell43/monerod-container/workflows/Check%20Dockerfile/badge.svg)](https://github.com/marketplace/actions/super-linter)
+
 `monerod-container` is yet another container image for running `monerod`.
 
 ## Installation

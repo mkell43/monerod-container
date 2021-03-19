@@ -12,27 +12,33 @@ jobs:
       - name: "Checkout Repository"
         uses: "actions/checkout@v2"
 
-      - name: "Hadolint - Lint Dockerfile"
-        uses: brpaz/hadolint-action@v1.3.1
-        with:
-          dockerfile: Dockerfile
-
       # Default GITHUB_* and github.* variables don't include the short SHA.
       #   We manually create it here to use later in tagging the built
       #   image and scanning it later.
       # https://stackoverflow.com/a/59819441
-      - name: "Set Short SHA"
-        id: var
-        run: echo "::set-output name=sha_short::$(git rev-parse --short HEAD)"
+      - name: "Set Repo Vars"
+        id: vars
+        run: |
+             echo "::set-output name=sha_short::$(git rev-parse --short HEAD)"
+             echo "::set-output name=branch::$(echo ${GITHUB_REF#refs/heads/})"
+
+      - name: Lint Code Base
+        uses: github/super-linter@v3
+        env:
+          VALIDATE_ALL_CODEBASE: false
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DEFAULT_BRANCH: ${{ steps.vars.outputs.branch }}
+          VALIDATE_DOCKERFILE: true
+          VALIDATE_DOCKERFILE_HADOLINT: true
 
       - name: "Build Container Image"
-        run: docker build . --file Dockerfile --tag ${{ github.repository }}:${{ steps.var.outputs.sha_short }}
+        run: docker build . --file Dockerfile --tag ${{ github.repository }}:${{ steps.vars.outputs.sha_short }}
 
       - name: "Scan Container Image w/ Trivy"
         uses: aquasecurity/trivy-action@master
         id: scan
         with:
-          image-ref: ${{ github.repository }}:${{ steps.var.outputs.sha_short }}
+          image-ref: ${{ github.repository }}:${{ steps.vars.outputs.sha_short }}
           format: "template"
           template: '@/contrib/sarif.tpl'
           output: "trivy-results.sarif"
