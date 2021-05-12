@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: "Checkout Repository"
-        uses: "actions/checkout@v2"
+        uses: "actions/checkout@v2.3.4"
 
       # Default GITHUB_* and github.* variables don't include the short SHA.
       #   We manually create it here to use later in tagging the built
